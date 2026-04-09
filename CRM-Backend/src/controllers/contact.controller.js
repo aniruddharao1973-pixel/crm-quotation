@@ -35,12 +35,27 @@ export const getContacts = asyncHandler(async (req, res) => {
     };
   }
 
+  const includeDeals = parseInt(limit) > 1000;
+
   const [contacts, total] = await Promise.all([
     prisma.contact.findMany({
       where,
       include: {
         account: { select: { id: true, accountName: true } },
         owner: { select: { id: true, name: true } },
+
+        // ✅ include deals ONLY for export
+        ...(includeDeals && {
+          deals: {
+            select: {
+              id: true,
+              dealName: true,
+              amount: true,
+              stage: true,
+            },
+          },
+        }),
+
         _count: { select: { deals: true } },
 
         // ⭐ UPCOMING TASK

@@ -63,6 +63,7 @@ const AccountList = () => {
 
   const fileInputRef = useRef(null);
   const searchInputRef = useRef(null);
+  const currentPageAccountsRef = useRef([]);
   const [importing, setImporting] = useState(false);
   const [search, setSearch] = useState("");
   const [lifecycle, setLifecycle] = useState("");
@@ -145,39 +146,161 @@ const AccountList = () => {
     searchInputRef.current?.focus();
   };
 
-  const prepareExportData = () => {
-    return accounts.map((a) => ({
-      Name: a.accountName,
-      Phone: a.phone || "",
-      Industry: a.industry || "",
-      Rating: a.rating || "",
-      Owner: a.owner?.name || "",
-      Contacts: a._count?.contacts || 0,
-      Deals: a._count?.deals || 0,
-    }));
+  // const fetchAllAccountsForExport = async () => {
+  //   try {
+  //     const res = await dispatch(
+  //       fetchAccounts({
+  //         page: 1,
+  //         limit: 100000, // large number to fetch all
+  //         search: debouncedSearch,
+  //         lifecycle,
+  //       }),
+  //     ).unwrap();
+
+  //     return res?.data || res || [];
+  //   } catch (err) {
+  //     toast.error("Failed to fetch data for export");
+  //     return [];
+  //   }
+  // };
+
+  const fetchAllAccountsForExport = async () => {
+    try {
+      // ✅ backup current page data
+      currentPageAccountsRef.current = accounts;
+
+      const res = await dispatch(
+        fetchAccounts({
+          page: 1,
+          limit: 100000,
+          search: debouncedSearch,
+          lifecycle,
+        }),
+      ).unwrap();
+
+      const allData = res?.data || res || [];
+
+      // ✅ restore original page silently
+      dispatch(
+        fetchAccounts({
+          page,
+          limit: 10,
+          search: debouncedSearch,
+          lifecycle,
+        }),
+      );
+
+      return allData;
+    } catch (err) {
+      toast.error("Failed to fetch data for export");
+      return [];
+    }
   };
 
-  const exportCSV = () => {
-    const data = prepareExportData();
+  const prepareExportData = (data) => {
+    const rows = [];
+
+    data.forEach((a) => {
+      const deals = a.deals && a.deals.length ? a.deals : [null];
+
+      deals.forEach((d) => {
+        rows.push({
+          "Account Name": a.accountName || "",
+          Industry: a.industry || "",
+          Owner: a.owner?.name || "",
+          Phone: a.phone || "",
+          Rating: a.rating || "",
+          // Lifecycle: a.lifecycle || "",
+          Status: a.lifecycle || "",
+
+          Contacts: a._count?.contacts || 0,
+          "Deals Count": a._count?.deals || 0,
+
+          "Deal Name": d?.dealName || "",
+          "Deal Stage": d?.stage || "",
+          "Deal Value": d?.amount || "",
+          "Deal Owner": d?.owner?.name || "",
+
+          Revenue: a.annualRevenue || "",
+          Employees: a.employees || "",
+
+          "Created Date": a.createdAt
+            ? new Date(a.createdAt).toLocaleDateString()
+            : "",
+          "Last Updated": a.updatedAt
+            ? new Date(a.updatedAt).toLocaleDateString()
+            : "",
+        });
+      });
+    });
+
+    return rows;
+  };
+
+  const exportCurrentPageCSV = () => {
+    const data = prepareExportData(accounts);
+
     const worksheet = XLSX.utils.json_to_sheet(data);
     const csv = XLSX.utils.sheet_to_csv(worksheet);
+
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    saveAs(blob, `accounts_export_${Date.now()}.csv`);
+    saveAs(blob, `accounts_page_${page}_${Date.now()}.csv`);
+
     setShowExportDropdown(false);
   };
 
-  const exportExcel = () => {
-    const data = prepareExportData();
+  const exportCurrentPageExcel = () => {
+    const data = prepareExportData(accounts);
+
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
+
     XLSX.utils.book_append_sheet(workbook, worksheet, "Accounts");
+
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
     });
+
     const blob = new Blob([excelBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
+
+    saveAs(blob, `accounts_page_${page}_${Date.now()}.xlsx`);
+
+    setShowExportDropdown(false);
+  };
+
+  const exportCSV = async () => {
+    const allAccounts = await fetchAllAccountsForExport();
+    const data = prepareExportData(allAccounts);
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+    saveAs(blob, `accounts_export_${Date.now()}.csv`);
+    setShowExportDropdown(false);
+  };
+
+  const exportExcel = async () => {
+    const allAccounts = await fetchAllAccountsForExport();
+    const data = prepareExportData(allAccounts);
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Accounts");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
     saveAs(blob, `accounts_export_${Date.now()}.xlsx`);
     setShowExportDropdown(false);
   };
@@ -322,24 +445,45 @@ const AccountList = () => {
                   <ArrowDownTrayIcon className="w-4 h-4" />
                   <span className="hidden sm:inline">Export</span>
                 </button>
+
                 {showExportDropdown && (
                   <>
                     <div
                       className="fixed inset-0 z-40"
                       onClick={() => setShowExportDropdown(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-44 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 overflow-hidden py-1">
+
+                    <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 overflow-hidden py-1">
+                      {/* ALL DATA */}
                       <button
                         onClick={exportExcel}
-                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-[#3B2E7E]/5 hover:text-[#3B2E7E] transition-colors"
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-[#3B2E7E]/5 hover:text-[#3B2E7E]"
                       >
-                        📊 Export Excel
+                        📊 Export All ({pagination?.total || 0}) - Excel
                       </button>
+
                       <button
                         onClick={exportCSV}
-                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-[#3B2E7E]/5 hover:text-[#3B2E7E] transition-colors"
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-[#3B2E7E]/5 hover:text-[#3B2E7E]"
                       >
-                        📄 Export CSV
+                        📄 Export All ({pagination?.total || 0}) - CSV
+                      </button>
+
+                      <div className="border-t my-1" />
+
+                      {/* CURRENT PAGE */}
+                      <button
+                        onClick={exportCurrentPageExcel}
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-[#3B2E7E]/5 hover:text-[#3B2E7E]"
+                      >
+                        📊 Export Page ({accounts.length}) - Excel
+                      </button>
+
+                      <button
+                        onClick={exportCurrentPageCSV}
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-[#3B2E7E]/5 hover:text-[#3B2E7E]"
+                      >
+                        📄 Export Page ({accounts.length}) - CSV
                       </button>
                     </div>
                   </>

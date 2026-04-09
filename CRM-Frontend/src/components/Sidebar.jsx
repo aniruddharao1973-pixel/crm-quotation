@@ -518,7 +518,7 @@ function SidebarContent({
 
       <div className="mx-3 mb-2 border-t border-white/10" />
 
-      <div className="flex-1 space-y-1 mt-2 overflow-y-auto">
+      <div className="flex-1 space-y-1 mt-2 overflow-y-auto overflow-x-hidden scrollbar-none">
         {menu.map((item) => (
           <MenuItem
             key={item.name}
@@ -730,7 +730,7 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
       </aside>
       {/* DESKTOP */}
       <aside
-        className={`hidden lg:flex flex-col h-screen bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] text-white ${
+        className={`hidden lg:flex flex-col h-screen overflow-hidden bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] text-white ${
           collapsed ? "w-[72px]" : "w-[250px]"
         }`}
       >

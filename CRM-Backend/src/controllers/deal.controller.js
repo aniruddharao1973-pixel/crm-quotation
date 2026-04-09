@@ -99,7 +99,9 @@ export const getDeals = asyncHandler(async (req, res) => {
     productGroup,
   } = req.query;
 
-  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const isExport = parseInt(limit) > 1000;
+
+  const skip = isExport ? 0 : (parseInt(page) - 1) * parseInt(limit);
   const take = parseInt(limit);
 
   // Define search filter
@@ -165,7 +167,18 @@ export const getDeals = asyncHandler(async (req, res) => {
   const [deals, total] = await Promise.all([
     prisma.deal.findMany({
       where,
-      include: dealInclude,
+
+      include: {
+        ...dealInclude,
+
+        // ✅ ADD THIS
+        _count: {
+          select: {
+            stageHistory: true,
+          },
+        },
+      },
+
       orderBy,
       skip,
       take,
@@ -452,17 +465,23 @@ export const updateDeal = asyncHandler(async (req, res) => {
     });
 
     /* 🔥 STAGE CHANGED → CREATE HISTORY */
-    if (req.body.stage && req.body.stage !== existing.stage) {
+    /* 🔥 CREATE HISTORY (stage change OR notes added) */
+    if (
+      (req.body.stage && req.body.stage !== existing.stage) ||
+      (req.body.stage === existing.stage && description)
+    ) {
       await tx.dealStageHistory.create({
         data: {
           dealId: updated.id,
-          stage: updated.stage,
+
+          // ✅ if same stage, keep existing stage
+          stage: req.body.stage || existing.stage,
+
           amount: updated.amount,
           probability: updated.probability,
           expectedRevenue: updated.expectedRevenue,
           closingDate: updated.closingDate,
 
-          // ✅ ADD THIS
           description: description || null,
 
           changedById: req.user.id,
@@ -818,4 +837,37 @@ export const importDeals = asyncHandler(async (req, res) => {
 
   console.log("[DEAL IMPORT SUMMARY]", stats);
   res.json({ success: true, data: stats });
+});
+/* =========================================================
+   PIPELINE STATS (FOR DASHBOARD CARDS)
+========================================================= */
+export const getPipelineStats = asyncHandler(async (req, res) => {
+  const baseWhere = {
+    ...(req.user.role !== "ADMIN" && {
+      assignments: {
+        some: { userId: req.user.id },
+      },
+    }),
+  };
+
+  const [won, negotiation, proposal] = await Promise.all([
+    prisma.deal.count({
+      where: { ...baseWhere, stage: "CLOSED_WON" },
+    }),
+    prisma.deal.count({
+      where: { ...baseWhere, stage: "NEGOTIATION" },
+    }),
+    prisma.deal.count({
+      where: { ...baseWhere, stage: "COMMERCIAL_PROPOSAL" },
+    }),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      won,
+      negotiation,
+      proposal,
+    },
+  });
 });

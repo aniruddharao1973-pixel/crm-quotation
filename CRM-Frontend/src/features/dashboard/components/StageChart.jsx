@@ -179,6 +179,7 @@
 
 // export default StageChart;
 
+// ===============================================================================================================================================
 // src\features\dashboard\components\StageChart.jsx
 import { formatLabel, STAGE_COLORS } from "../../../constants";
 
@@ -217,8 +218,42 @@ const StageChart = ({ data }) => {
     );
   }
 
-  const maxCount = Math.max(...data.map((d) => d.count), 1);
   const totalDeals = data.reduce((sum, d) => sum + d.count, 0);
+
+  const regrettedIndex = data.findIndex(
+    (d) => d.stage.toLowerCase() === "regretted",
+  );
+
+  const funnelWidths = [];
+
+  for (let i = 0; i < data.length; i++) {
+    if (i === 0) {
+      funnelWidths.push(100);
+      continue;
+    }
+
+    const prev = data[i - 1];
+    const curr = data[i];
+
+    const prevWidth = funnelWidths[i - 1];
+    const ratio = prev.count === 0 ? 0 : curr.count / prev.count;
+
+    let width = prevWidth * ratio;
+
+    // keep the lower part a bit fuller after "Regretted"
+    if (regrettedIndex !== -1 && i > regrettedIndex) {
+      width = Math.max(width, prevWidth * 0.86);
+    }
+
+    // never let a stage become wider than the previous one
+    width = Math.min(width, prevWidth * 0.95);
+
+    // visual minimum
+    const minWidth =
+      i > regrettedIndex ? Math.max(12, 18 - (i - regrettedIndex) * 1.5) : 12;
+
+    funnelWidths.push(Math.max(width, minWidth));
+  }
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 lg:p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -245,7 +280,6 @@ const StageChart = ({ data }) => {
       {/* Funnel */}
       <div className="flex flex-col items-center gap-1 px-2 sm:px-4 lg:px-6">
         {data.map((item, index) => {
-          const widthPercentage = (item.count / maxCount) * 100;
           const percentOfTotal = ((item.count / totalDeals) * 100).toFixed(1);
 
           const stageColor = STAGE_COLORS[item.stage] || {
@@ -269,20 +303,19 @@ const StageChart = ({ data }) => {
                 {/* Funnel Block */}
                 <div
                   className={`
-                    ${stageColor.dot}
-                    transition-all duration-300 ease-out
-                    hover:brightness-110 hover:scale-[1.02]
-                    cursor-pointer
-                    shadow-sm hover:shadow-md
-                    relative overflow-hidden
-                  `}
+              ${stageColor.dot}
+              transition-all duration-300 ease-out
+              hover:brightness-110 hover:scale-[1.02]
+              cursor-pointer
+              shadow-sm hover:shadow-md
+              relative overflow-hidden
+            `}
                   style={{
-                    width: `${Math.max(widthPercentage, 22)}%`,
+                    width: `${funnelWidths[index]}%`,
                     height: "52px",
                     clipPath,
                   }}
                 >
-                  {/* Gloss overlay */}
                   <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
                 </div>
 
@@ -293,13 +326,6 @@ const StageChart = ({ data }) => {
                   </span>
                   <span className="text-base sm:text-lg font-bold text-gray-900 drop-shadow-sm tabular-nums leading-tight">
                     {item.count}
-                  </span>
-                </div>
-
-                {/* Percentage pill */}
-                <div className="absolute right-0 sm:-right-1 lg:-right-2 top-1/2 -translate-y-1/2 bg-white border border-gray-200 rounded-full px-2 py-0.5 shadow-sm">
-                  <span className="text-xs font-semibold text-gray-500 tabular-nums">
-                    {percentOfTotal}%
                   </span>
                 </div>
               </div>
@@ -321,7 +347,6 @@ const StageChart = ({ data }) => {
                     {percentOfTotal}%
                   </span>
                 </div>
-                {/* Arrow */}
                 <div className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-gray-900/95 rotate-45 rounded-sm" />
               </div>
             </div>

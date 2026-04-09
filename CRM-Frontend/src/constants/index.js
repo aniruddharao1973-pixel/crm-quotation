@@ -126,16 +126,61 @@ export const formatLabel = (str) => {
 };
 export const PIPELINE_STAGES = [
   { key: "RFQ", label: "RFQ", color: "border-gray-400", bg: "bg-gray-400" },
-  { key: "VISIT_MEETING", label: "Visit / Meeting", color: "border-blue-400", bg: "bg-blue-400" },
-  { key: "PREVIEW", label: "Preview", color: "border-indigo-400", bg: "bg-indigo-400" },
-  { key: "TECHNICAL_PROPOSAL", label: "Technical Proposal", color: "border-purple-400", bg: "bg-purple-400" },
-  { key: "COMMERCIAL_PROPOSAL", label: "Commercial Proposal", color: "border-yellow-400", bg: "bg-yellow-400" },
-  { key: "REVIEW_FEEDBACK", label: "Review / Feedback", color: "border-orange-400", bg: "bg-orange-400" },
-  { key: "MOVED_TO_PURCHASE", label: "Moved to Purchase", color: "border-cyan-400", bg: "bg-cyan-400" },
-  { key: "NEGOTIATION", label: "Negotiation", color: "border-amber-400", bg: "bg-amber-400" },
+  {
+    key: "VISIT_MEETING",
+    label: "Visit / Meeting",
+    color: "border-blue-400",
+    bg: "bg-blue-400",
+  },
+  {
+    key: "PREVIEW",
+    label: "Preview",
+    color: "border-indigo-400",
+    bg: "bg-indigo-400",
+  },
+  {
+    key: "TECHNICAL_PROPOSAL",
+    label: "Technical Proposal",
+    color: "border-purple-400",
+    bg: "bg-purple-400",
+  },
+  {
+    key: "COMMERCIAL_PROPOSAL",
+    label: "Commercial Proposal",
+    color: "border-yellow-400",
+    bg: "bg-yellow-400",
+  },
+  {
+    key: "REVIEW_FEEDBACK",
+    label: "Review / Feedback",
+    color: "border-orange-400",
+    bg: "bg-orange-400",
+  },
+  {
+    key: "MOVED_TO_PURCHASE",
+    label: "Moved to Purchase",
+    color: "border-cyan-400",
+    bg: "bg-cyan-400",
+  },
+  {
+    key: "NEGOTIATION",
+    label: "Negotiation",
+    color: "border-amber-400",
+    bg: "bg-amber-400",
+  },
 
-  { key: "CLOSED_WON", label: "Closed Won", color: "border-green-400", bg: "bg-green-400" },
-  { key: "CLOSED_LOST", label: "Closed Lost", color: "border-red-400", bg: "bg-red-400" },
+  {
+    key: "CLOSED_WON",
+    label: "Closed Won",
+    color: "border-green-400",
+    bg: "bg-green-400",
+  },
+  {
+    key: "CLOSED_LOST",
+    label: "Closed Lost",
+    color: "border-red-400",
+    bg: "bg-red-400",
+  },
   {
     key: "CLOSED_LOST_TO_COMPETITION",
     label: "Lost to Competition",
@@ -143,7 +188,6 @@ export const PIPELINE_STAGES = [
     bg: "bg-rose-400",
   },
 ];
-
 
 export const PROGRESS_STAGES = [
   "RFQ",
@@ -223,10 +267,8 @@ export const DEAL_TYPES = [
 // Format currency in Indian Rupees
 export const formatCurrency = (amount) => {
   if (amount === null || amount === undefined) return "—";
+
   return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
 };
@@ -267,16 +309,25 @@ export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export const validateImageFile = (file) => {
   if (!file) return { valid: false, error: "No file selected" };
-  
-  const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+
+  const validTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+  ];
   if (!validTypes.includes(file.type)) {
-    return { valid: false, error: "Please select a valid image (JPEG, PNG, GIF, WebP)" };
+    return {
+      valid: false,
+      error: "Please select a valid image (JPEG, PNG, GIF, WebP)",
+    };
   }
-  
+
   if (file.size > MAX_FILE_SIZE) {
     return { valid: false, error: "Image size should be less than 5MB" };
   }
-  
+
   return { valid: true, error: null };
 };
 

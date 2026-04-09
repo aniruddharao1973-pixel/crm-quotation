@@ -7,6 +7,9 @@ import SendEmailModal from "../email/components/SendEmailModal";
 import EmailTemplateManager from "../email/components/EmailTemplateManager";
 import EmailLogs from "../email/components/EmailLogs";
 import { fetchMe } from "../auth/authSlice";
+import NotesModal from "./components/NotesModal";
+import StageHistoryModal from "./components/StageHistoryModal";
+import StageModal from "./components/StageModal";
 import {
   STAGE_COLORS,
   PROGRESS_STAGES,
@@ -205,6 +208,12 @@ const DealDetail = () => {
     description: "",
   });
 
+  const [stageHistoryModal, setStageHistoryModal] = useState({
+    open: false,
+    stage: null,
+    data: [],
+  });
+
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -214,8 +223,6 @@ const DealDetail = () => {
   }, [dispatch, id]);
 
   const handleStageChange = async () => {
-    if (stageModal.stage === deal.stage) return;
-
     try {
       setUpdatingStage(true);
 
@@ -238,9 +245,23 @@ const DealDetail = () => {
   if (detailLoading || !deal) {
     return (
       <div className="flex items-center justify-center min-h-[500px]">
-        <div className="text-center">
-          <Spinner size="lg" />
-          <p className="text-sm text-slate-500 mt-4">Loading deal details...</p>
+        <div className="flex flex-col items-center gap-5">
+          {/* Loader */}
+          <div className="relative w-16 h-16">
+            {/* Outer glow ring */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 blur-md opacity-40 animate-pulse" />
+
+            {/* Spinning ring */}
+            <div className="w-16 h-16 rounded-full border-4 border-transparent border-t-purple-500 border-r-violet-500 animate-spin" />
+
+            {/* Inner soft circle */}
+            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-purple-100 to-white opacity-70" />
+          </div>
+
+          {/* Text */}
+          <p className="text-sm font-medium text-slate-600 animate-pulse">
+            Loading deal details...
+          </p>
         </div>
       </div>
     );
@@ -253,11 +274,27 @@ const DealDetail = () => {
     deal.stage === "CLOSED_LOST" ||
     deal.stage === "CLOSED_LOST_TO_COMPETITION";
 
+  // ✅ GROUP STAGE HISTORY (NEW)
+  const groupedHistory = Object.values(
+    (deal.stageHistory || []).reduce((acc, item) => {
+      if (!acc[item.stage]) acc[item.stage] = [];
+      acc[item.stage].push(item);
+      return acc;
+    }, {}),
+  );
+
   const tabs = [
     { key: "overview", label: "Overview", icon: DocumentTextIcon },
     { key: "timeline", label: "Timeline", icon: ClockIcon },
     { key: "history", label: "Stage History", icon: ChartBarIcon },
   ];
+
+  const formatTime = (date) => {
+    return new Date(date).toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   /* ════════════════════ RENDER ════════════════════ */
 
@@ -278,7 +315,7 @@ const DealDetail = () => {
       </nav>
 
       {/* ───────────── HERO HEADER ───────────── */}
-      <div className="relative bg-gradient-to-b from-[#3B2E7E] to-[#2A1F5C] rounded-3xl p-8 overflow-hidden">
+      <div className="relative bg-gradient-to-b from-[#433877] to-[#463b79] rounded-3xl p-8 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
@@ -308,7 +345,7 @@ const DealDetail = () => {
                       : "bg-white/20 backdrop-blur-sm"
                 }`}
               >
-                <CurrencyDollarIcon className="w-7 h-7 text-white" />
+                <span className="text-white text-xl font-bold">₹</span>
               </div>
 
               <div>
@@ -316,11 +353,11 @@ const DealDetail = () => {
                   <h1 className="text-2xl sm:text-3xl font-bold text-white">
                     {deal.dealName}
                   </h1>
-                  <span
+                  {/* <span
                     className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold ${STAGE_COLORS[deal.stage]} border`}
                   >
                     {formatLabel(deal.stage)}
-                  </span>
+                  </span> */}
                 </div>
 
                 <div className="flex items-center gap-3 text-sm text-purple-200">
@@ -362,7 +399,7 @@ const DealDetail = () => {
       {/* ───────────── STAT CARDS ───────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon={CurrencyDollarIcon}
+          icon={() => <span className="text-white text-lg font-bold">₹</span>}
           label="Deal Value"
           value={formatCurrency(deal.amount)}
           variant="emerald"
@@ -506,7 +543,7 @@ const DealDetail = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto  p-3">
           {PROGRESS_STAGES.map((stage, idx) => {
             const isActive = deal.stage === stage;
             const isPast = idx < currentIdx;
@@ -998,83 +1035,107 @@ const DealDetail = () => {
                 <div className="w-full overflow-x-auto rounded-xl border border-[#3B2E7E]/10">
                   <table className="min-w-[700px] w-full text-sm">
                     <thead>
-                      <tr className="bg-gradient-to-r from-[#3B2E7E]/5 to-purple-50/50 border-b border-[#3B2E7E]/10">
-                        <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-600 uppercase tracking-wider">
-                          #
+                      <tr className="bg-[#3B2E7E]/8 text-left border-b border-[#3B2E7E]/10">
+                        <th className="px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-[#2A1F5C]">
+                          No.
                         </th>
-                        <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-600 uppercase tracking-wider">
-                          Stage
-                        </th>
-                        <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-[#2A1F5C]">
                           Changed By
                         </th>
-                        <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-600 uppercase tracking-wider">
-                          Date
+                        <th className="px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-[#2A1F5C]">
+                          Timestamp
                         </th>
-                        <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-600 uppercase tracking-wider">
-                          Time Elapsed
-                        </th>
-                        <th className="text-left px-4 py-3.5 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-[#2A1F5C]">
                           Notes
                         </th>
                       </tr>
                     </thead>
+
                     <tbody className="divide-y divide-slate-100">
-                      {deal.stageHistory.map((h, idx) => (
-                        <tr
-                          key={h.id}
-                          className="hover:bg-[#3B2E7E]/5 transition-colors"
-                        >
-                          <td className="px-4 py-3 text-slate-400 font-mono text-xs">
-                            {idx + 1}
-                          </td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold ${STAGE_COLORS[h.stage]}`}
-                            >
-                              {formatLabel(h.stage)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            {h.changedBy?.name && (
-                              <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#3B2E7E] to-[#5A4A9C] flex items-center justify-center shadow-sm">
-                                  <span className="text-xs font-bold text-white">
-                                    {h.changedBy.name[0]}
+                      {groupedHistory.map((group, groupIdx) => {
+                        const stage = group[0].stage;
+
+                        return (
+                          <>
+                            {/* ✅ GROUP HEADER */}
+                            <tr className="bg-[#3B2E7E]/5">
+                              <td colSpan={5} className="px-4 py-2">
+                                <div className="flex items-center justify-between">
+                                  <button
+                                    onClick={() =>
+                                      setStageHistoryModal({
+                                        open: true,
+                                        stage,
+                                        data: group,
+                                      })
+                                    }
+                                    className={`px-4 py-2 rounded-lg text-sm font-extrabold uppercase tracking-wider shadow-sm border border-[#3B2E7E]/20 ${STAGE_COLORS[stage]} hover:scale-105 hover:shadow-md transition`}
+                                  >
+                                    {formatLabel(stage)}
+                                  </button>
+
+                                  <span className="text-xs text-slate-500">
+                                    {group.length} update
+                                    {group.length > 1 ? "s" : ""}
                                   </span>
                                 </div>
-                                <span className="text-slate-700 font-medium">
-                                  {h.changedBy.name}
-                                </span>
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-slate-600 font-medium">
-                            {formatDate(h.createdAt)}
-                          </td>
-                          <td className="px-4 py-3 text-slate-400 text-xs">
-                            {getTimeSince(h.createdAt)}
-                          </td>
-                          <td className="px-4 py-3 text-xs">
-                            {h.description ? (
-                              <button
-                                onClick={() =>
-                                  setNotesModal({
-                                    open: true,
-                                    historyId: h.id,
-                                    description: h.description || "",
-                                  })
-                                }
-                                className="text-[#3B2E7E] font-semibold underline underline-offset-2 hover:text-[#2A1F5C]"
+                              </td>
+                            </tr>
+
+                            {/* ✅ NORMAL ROWS */}
+                            {group.map((h, idx) => (
+                              <tr
+                                key={h.id}
+                                className="hover:bg-[#3B2E7E]/5 transition-colors"
                               >
-                                Click to view
-                              </button>
-                            ) : (
-                              <span className="text-slate-300">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                                <td className="px-4 py-2 text-xs text-slate-400">
+                                  {idx + 1}
+                                </td>
+
+                                <td className="px-4 py-2">
+                                  {h.changedBy?.name}
+                                </td>
+
+                                <td className="px-4 py-2">
+                                  <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-slate-800">
+                                      {formatDate(h.createdAt)}
+                                    </span>
+                                    <span className="text-[11px] text-slate-400">
+                                      {new Date(h.createdAt).toLocaleTimeString(
+                                        "en-IN",
+                                        {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        },
+                                      )}
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="px-4 py-2 text-xs">
+                                  {h.description ? (
+                                    <button
+                                      onClick={() =>
+                                        setNotesModal({
+                                          open: true,
+                                          historyId: h.id,
+                                          description: h.description || "",
+                                        })
+                                      }
+                                      className="text-[#3B2E7E] font-medium hover:underline"
+                                    >
+                                      Notes
+                                    </button>
+                                  ) : (
+                                    <span className="text-slate-300">—</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1132,472 +1193,51 @@ const DealDetail = () => {
       {showEmailLogs && (
         <EmailLogs dealId={deal.id} onClose={() => setShowEmailLogs(false)} />
       )}
-      {stageModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
-            onClick={() =>
-              setStageModal({ open: false, stage: null, description: "" })
-            }
-          />
-
-          {/* Modal */}
-          <div
-            className="relative bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
-            style={{
-              animation: "modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-            }}
-          >
-            {/* Top gradient bar */}
-            <div className="h-1.5 w-full bg-gradient-to-r from-purple-900 to-indigo-950" />
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-900 to-indigo-950 flex items-center justify-center shadow-md shadow-violet-200">
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-gray-800 tracking-tight">
-                    Move Stage
-                  </h2>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    Transitioning to{" "}
-                    <span className="font-semibold text-violet-500">
-                      {formatLabel(stageModal.stage)}
-                    </span>
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() =>
-                  setStageModal({ open: false, stage: null, description: "" })
-                }
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all active:scale-90"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div className="mx-6 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-
-            {/* Stage pill indicator */}
-            <div className="px-6 pt-5">
-              <div className="flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-2xl px-4 py-3">
-                <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
-                <span className="text-xs font-medium text-violet-600">
-                  Moving deal to —
-                </span>
-                <span className="ml-auto text-xs font-bold text-violet-700 bg-violet-100 px-2.5 py-1 rounded-full">
-                  {formatLabel(stageModal.stage)}
-                </span>
-              </div>
-            </div>
-
-            {/* Body */}
-            <div className="p-6">
-              <label className="block text-[11px] font-semibold text-violet-500 mb-2.5 uppercase tracking-widest">
-                Transition Notes
-              </label>
-              <div className="relative">
-                <textarea
-                  rows={5}
-                  value={stageModal.description}
-                  onChange={(e) =>
-                    setStageModal((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder="Add notes for this stage transition..."
-                  className="w-full border border-gray-200 rounded-2xl p-4 text-sm text-gray-700 placeholder-gray-300 resize-none outline-none transition-all focus:border-violet-400 focus:ring-4 focus:ring-violet-100 leading-relaxed bg-gray-50/50"
-                />
-                <span className="absolute bottom-3 right-3.5 text-[10px] text-gray-300 pointer-events-none select-none">
-                  {stageModal.description.length} / 500
-                </span>
-              </div>
-
-              {/* Quick tags */}
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {[
-                  "Prospect agreed",
-                  "Follow-up needed",
-                  "Docs shared",
-                  "Verbal confirm",
-                ].map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() =>
-                      setStageModal((prev) => ({
-                        ...prev,
-                        description: prev.description
-                          ? prev.description + " " + tag
-                          : tag,
-                      }))
-                    }
-                    className="px-2.5 py-1 text-[11px] font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-100 rounded-full transition-all active:scale-95"
-                  >
-                    + {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-between items-center gap-2.5 px-6 py-4 bg-gray-50/80 border-t border-gray-100">
-              <p className="text-[11px] text-gray-400 italic">
-                This action will update the deal stage
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() =>
-                    setStageModal({ open: false, stage: null, description: "" })
-                  }
-                  className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95"
-                >
-                  Cancel
-                </button>
-                <button
-                  disabled={stageModal.stage === deal.stage}
-                  onClick={async () => {
-                    await handleStageChange();
-
-                    if (stageModal.stage !== deal.stage) {
-                      const toast = document.createElement("div");
-                      toast.innerHTML = `
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <div>
-                      <div style="font-size:13px;font-weight:600;color:white;">Stage updated!</div>
-                      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:1px;">Deal moved to ${formatLabel(stageModal.stage)}</div>
-                    </div>
-                  </div>
-                `;
-                      Object.assign(toast.style, {
-                        position: "fixed",
-                        bottom: "24px",
-                        right: "24px",
-                        background: "linear-gradient(135deg, #4c1d95, #1e1b4b)",
-                        padding: "12px 18px",
-                        borderRadius: "16px",
-                        boxShadow: "0 8px 32px rgba(124,58,237,0.35)",
-                        zIndex: "9999",
-                        animation:
-                          "toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-                        minWidth: "220px",
-                      });
-                      document.body.appendChild(toast);
-                      setTimeout(() => {
-                        toast.style.animation = "toastOut 0.25s ease forwards";
-                        setTimeout(() => toast.remove(), 250);
-                      }, 3000);
-                    }
-                  }}
-                  className={`px-5 py-2 text-sm font-semibold rounded-xl text-white flex items-center gap-2 transition-all active:scale-95 ${
-                    stageModal.stage === deal.stage
-                      ? "bg-gray-300 cursor-not-allowed shadow-none"
-                      : "bg-gradient-to-r from-purple-900 to-indigo-950 hover:from-purple-800 hover:to-indigo-900 shadow-md shadow-violet-200"
-                  }`}
-                >
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                  Move Stage
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <style>{`
-      @keyframes modalIn {
-        from { opacity: 0; transform: scale(0.93) translateY(12px); }
-        to   { opacity: 1; transform: scale(1) translateY(0); }
-      }
-      @keyframes toastIn {
-        from { opacity: 0; transform: translateY(16px) scale(0.95); }
-        to   { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      @keyframes toastOut {
-        from { opacity: 1; transform: translateY(0) scale(1); }
-        to   { opacity: 0; transform: translateY(8px) scale(0.95); }
-      }
-    `}</style>
-        </div>
-      )}
-      {notesModal.open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity"
-            onClick={() =>
-              setNotesModal({ open: false, historyId: null, description: "" })
-            }
-          />
-
-          {/* Modal */}
-          <div
-            className="relative bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
-            style={{
-              animation: "modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1)",
-            }}
-          >
-            {/* Top gradient bar */}
-            <div className="h-1.5 w-full bg-gradient-to-r from-purple-900 to-indigo-950" />
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-900 to-indigo-950 flex items-center justify-center shadow-md shadow-violet-200">
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-gray-800 tracking-tight">
-                    Stage Notes
-                  </h2>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    Add notes for this pipeline stage
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() =>
-                  setNotesModal({
-                    open: false,
-                    historyId: null,
-                    description: "",
-                  })
-                }
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all active:scale-90"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div className="mx-6 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
-
-            {/* Body */}
-            <div className="p-6">
-              <label className="block text-[11px] font-semibold text-violet-500 mb-2.5 uppercase tracking-widest">
-                Your Notes
-              </label>
-              <div className="relative">
-                <textarea
-                  rows={6}
-                  value={notesModal.description}
-                  onChange={(e) =>
-                    setNotesModal((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder="Write stage notes here..."
-                  className="w-full border border-gray-200 rounded-2xl p-4 text-sm text-gray-700 placeholder-gray-300 resize-none outline-none transition-all focus:border-violet-400 focus:ring-4 focus:ring-violet-100 leading-relaxed bg-gray-50/50"
-                />
-                {/* Inner bottom-right char count */}
-                <span className="absolute bottom-3 right-3.5 text-[10px] text-gray-300 pointer-events-none select-none">
-                  {notesModal.description.length} / 500
-                </span>
-              </div>
-
-              {/* Quick tags */}
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {[
-                  "Follow-up needed",
-                  "Blocked",
-                  "In review",
-                  "High priority",
-                ].map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() =>
-                      setNotesModal((prev) => ({
-                        ...prev,
-                        description: prev.description
-                          ? prev.description + " " + tag
-                          : tag,
-                      }))
-                    }
-                    className="px-2.5 py-1 text-[11px] font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-100 rounded-full transition-all active:scale-95"
-                  >
-                    + {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-between items-center gap-2.5 px-6 py-4 bg-gray-50/80 border-t border-gray-100">
-              <p className="text-[11px] text-gray-400 italic">
-                Changes are saved to this stage only
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() =>
-                    setNotesModal({
-                      open: false,
-                      historyId: null,
-                      description: "",
-                    })
-                  }
-                  className="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all active:scale-95"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      await fetch(
-                        `${API}/deals/stage-history/${notesModal.historyId}`,
-                        {
-                          method: "PUT",
-                          headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${localStorage.getItem("token")}`,
-                          },
-                          body: JSON.stringify({
-                            description: notesModal.description,
-                          }),
-                        },
-                      );
-                      dispatch(fetchDeal(id));
-                      setNotesModal({
-                        open: false,
-                        historyId: null,
-                        description: "",
-                      });
-
-                      // Toast
-                      const toast = document.createElement("div");
-                      toast.innerHTML = `
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    </div>
-                    <div>
-                      <div style="font-size:13px;font-weight:600;color:white;">Notes saved!</div>
-                      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:1px;">Stage notes updated successfully</div>
-                    </div>
-                  </div>
-                `;
-                      Object.assign(toast.style, {
-                        position: "fixed",
-                        bottom: "24px",
-                        right: "24px",
-                        background: "linear-gradient(135deg, #4c1d95, #1e1b4b)",
-                        padding: "12px 18px",
-                        borderRadius: "16px",
-                        boxShadow: "0 8px 32px rgba(124,58,237,0.35)",
-                        zIndex: "9999",
-                        animation:
-                          "toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1)",
-                        minWidth: "220px",
-                      });
-                      document.body.appendChild(toast);
-                      setTimeout(() => {
-                        toast.style.animation = "toastOut 0.25s ease forwards";
-                        setTimeout(() => toast.remove(), 250);
-                      }, 3000);
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
-                  className="px-5 py-2 text-sm font-semibold bg-gradient-to-r from-purple-900 to-indigo-950 text-white rounded-xl hover:from-purple-800 hover:to-indigo-900 shadow-md shadow-indigo-200 transition-all active:scale-95 flex items-center gap-2"
-                >
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                    <polyline points="17 21 17 13 7 13 7 21" />
-                    <polyline points="7 3 7 8 15 8" />
-                  </svg>
-                  Save Notes
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <style>{`
-      @keyframes modalIn {
-        from { opacity: 0; transform: scale(0.93) translateY(12px); }
-        to   { opacity: 1; transform: scale(1) translateY(0); }
-      }
-      @keyframes toastIn {
-        from { opacity: 0; transform: translateY(16px) scale(0.95); }
-        to   { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      @keyframes toastOut {
-        from { opacity: 1; transform: translateY(0) scale(1); }
-        to   { opacity: 0; transform: translateY(8px) scale(0.95); }
-      }
-    `}</style>
-        </div>
-      )}
+      <StageModal
+        open={stageModal.open}
+        stageModal={stageModal}
+        setStageModal={setStageModal}
+        updatingStage={updatingStage}
+        handleStageChange={handleStageChange}
+        dealStage={deal.stage}
+        onClose={() =>
+          setStageModal({
+            open: false,
+            stage: null,
+            description: "",
+          })
+        }
+      />
+      <StageHistoryModal
+        open={stageHistoryModal.open}
+        stage={stageHistoryModal.stage}
+        data={stageHistoryModal.data}
+        setNotesModal={setNotesModal}
+        getTimeSince={getTimeSince}
+        onClose={() =>
+          setStageHistoryModal({
+            open: false,
+            stage: null,
+            data: [],
+          })
+        }
+      />
+      <NotesModal
+        open={notesModal.open}
+        onClose={() =>
+          setNotesModal({
+            open: false,
+            historyId: null,
+            description: "",
+          })
+        }
+        notesModal={notesModal}
+        setNotesModal={setNotesModal}
+        API={API}
+        dispatch={dispatch}
+        fetchDeal={fetchDeal}
+        dealId={id}
+      />
     </div>
   );
 };

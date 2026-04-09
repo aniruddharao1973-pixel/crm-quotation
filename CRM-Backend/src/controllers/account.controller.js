@@ -49,6 +49,7 @@ export const getAccounts = asyncHandler(async (req, res) => {
   // if (req.user.role === "SALES_REP") {
   //   where.accountOwnerId = req.user.id;
   // }
+  const includeDeals = parseInt(limit) > 1000;
 
   const [accounts, total] = await Promise.all([
     prisma.account.findMany({
@@ -56,6 +57,22 @@ export const getAccounts = asyncHandler(async (req, res) => {
       include: {
         owner: { select: { id: true, name: true, email: true } },
         parentAccount: { select: { id: true, accountName: true } },
+
+        // ✅ include deals ONLY for export (large limit)
+        ...(includeDeals && {
+          deals: {
+            select: {
+              id: true,
+              dealName: true,
+              amount: true,
+              stage: true,
+              owner: {
+                select: { id: true, name: true },
+              },
+            },
+          },
+        }),
+
         _count: { select: { contacts: true, deals: true } },
       },
       orderBy: { [sortBy]: sortOrder },

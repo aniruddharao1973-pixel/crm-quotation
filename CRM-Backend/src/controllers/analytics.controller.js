@@ -8,9 +8,32 @@ import { getDealPriority } from "../services/analytics/dealPriority.service.js";
 ============================================================ */
 export const getDashboardAnalytics = asyncHandler(async (req, res) => {
   const isSalesRep = req.user.role === "SALES_REP";
-  const accFilter = isSalesRep ? { accountOwnerId: req.user.id } : {};
-  const conFilter = isSalesRep ? { contactOwnerId: req.user.id } : {};
-  const dealFilter = isSalesRep ? { dealOwnerId: req.user.id } : {};
+  const accFilter = isSalesRep
+    ? {
+        lifecycle: { not: "DEACTIVATED" },
+        assignments: {
+          some: { userId: req.user.id },
+        },
+      }
+    : {
+        lifecycle: { not: "DEACTIVATED" },
+      };
+
+  const conFilter = isSalesRep
+    ? {
+        assignments: {
+          some: { userId: req.user.id },
+        },
+      }
+    : {};
+
+  const dealFilter = isSalesRep
+    ? {
+        assignments: {
+          some: { userId: req.user.id },
+        },
+      }
+    : {};
 
   const today = new Date();
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);

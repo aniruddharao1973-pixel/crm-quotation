@@ -366,6 +366,7 @@ const ContactList = () => {
   const { user: currentUser } = useSelector((s) => s.auth);
 
   const fileInputRef = useRef(null);
+  const currentPageRef = useRef([]);
   const [importing, setImporting] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -408,6 +409,39 @@ const ContactList = () => {
     dispatch(fetchContacts({ page, limit: 10, search: debouncedSearch }));
   }, [dispatch, page, debouncedSearch]);
 
+  const fetchAllContactsForExport = async () => {
+    try {
+      // ✅ backup current page data
+      currentPageRef.current = contacts;
+
+      const res = await dispatch(
+        fetchContacts({
+          page: 1,
+          limit: 100000, // triggers deals in backend
+          search: debouncedSearch,
+        }),
+      ).unwrap();
+
+      const allData = res?.data || res || [];
+
+      // ✅ restore original page immediately (prevent 164 issue)
+      setTimeout(() => {
+        dispatch(
+          fetchContacts({
+            page,
+            limit: 10,
+            search: debouncedSearch,
+          }),
+        );
+      }, 0);
+
+      return allData;
+    } catch (err) {
+      toast.error("Failed to fetch data for export");
+      return [];
+    }
+  };
+
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -436,22 +470,56 @@ const ContactList = () => {
 
   const hasFilters = search;
 
-  const prepareExportData = () => {
-    return contacts.map((c) => ({
-      Name: `${c.firstName} ${c.lastName}`,
-      Email: c.email || "",
-      Phone: c.phone || "",
-      Account: c.account?.accountName || "",
-      LeadSource: c.leadSource || "",
-      Deals: c._count?.deals || 0,
-      CreatedAt: c.createdAt
-        ? new Date(c.createdAt).toLocaleDateString("en-GB")
-        : "",
-    }));
+  const prepareExportData = (data) => {
+    const rows = [];
+
+    data.forEach((c) => {
+      const deals = c.deals && c.deals.length ? c.deals : [null];
+
+      deals.forEach((d) => {
+        rows.push({
+          "Contact Name": `${c.firstName || ""} ${c.lastName || ""}`,
+          Email: c.email || "",
+          Phone: c.phone || "",
+          Mobile: c.mobile || "",
+          Title: c.title || "",
+          Department: c.department || "",
+
+          "Account Name": c.account?.accountName || "",
+          Owner: c.owner?.name || "",
+          "Lead Source": c.leadSource || "",
+
+          "Deals Count": c._count?.deals || 0,
+          "Deal Name": d?.dealName || "",
+          "Deal Stage": d?.stage || "",
+          "Deal Value": d?.amount || "",
+
+          "Upcoming Task": c.upcomingTask?.subject || "",
+          "Task Due Date": c.upcomingTask?.dueDate
+            ? new Date(c.upcomingTask.dueDate).toLocaleDateString()
+            : "",
+          "Task Priority": c.upcomingTask?.priority || "",
+
+          City: c.mailingCity || "",
+          State: c.mailingState || "",
+          Country: c.mailingCountry || "",
+
+          "Created Date": c.createdAt
+            ? new Date(c.createdAt).toLocaleDateString()
+            : "",
+          "Last Updated": c.updatedAt
+            ? new Date(c.updatedAt).toLocaleDateString()
+            : "",
+        });
+      });
+    });
+
+    return rows;
   };
 
-  const exportCSV = () => {
-    const data = prepareExportData();
+  const exportCSV = async () => {
+    const allContacts = await fetchAllContactsForExport();
+    const data = prepareExportData(allContacts);
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const csv = XLSX.utils.sheet_to_csv(worksheet);
@@ -462,8 +530,9 @@ const ContactList = () => {
     setShowExportDropdown(false);
   };
 
-  const exportExcel = () => {
-    const data = prepareExportData();
+  const exportExcel = async () => {
+    const allContacts = await fetchAllContactsForExport();
+    const data = prepareExportData(allContacts);
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -599,19 +668,77 @@ const ContactList = () => {
                     />
 
                     {/* Dropdown */}
-                    <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden py-1">
+                      {/* ALL DATA */}
                       <button
                         onClick={exportExcel}
-                        className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-900"
                       >
-                        Export as Excel
+                        📊 Export All ({pagination?.total || 0}) - Excel
                       </button>
 
                       <button
                         onClick={exportCSV}
-                        className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50"
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-900"
                       >
-                        Export as CSV
+                        📄 Export All ({pagination?.total || 0}) - CSV
+                      </button>
+
+                      <div className="border-t my-1" />
+
+                      {/* CURRENT PAGE */}
+                      <button
+                        onClick={() => {
+                          const data = prepareExportData(contacts);
+
+                          const worksheet = XLSX.utils.json_to_sheet(data);
+                          const workbook = XLSX.utils.book_new();
+                          XLSX.utils.book_append_sheet(
+                            workbook,
+                            worksheet,
+                            "Contacts",
+                          );
+
+                          const excelBuffer = XLSX.write(workbook, {
+                            bookType: "xlsx",
+                            type: "array",
+                          });
+
+                          const blob = new Blob([excelBuffer], {
+                            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                          });
+
+                          saveAs(
+                            blob,
+                            `contacts_page_${page}_${Date.now()}.xlsx`,
+                          );
+                          setShowExportDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-900"
+                      >
+                        📊 Export Page ({contacts.length}) - Excel
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const data = prepareExportData(contacts);
+
+                          const worksheet = XLSX.utils.json_to_sheet(data);
+                          const csv = XLSX.utils.sheet_to_csv(worksheet);
+
+                          const blob = new Blob([csv], {
+                            type: "text/csv;charset=utf-8;",
+                          });
+
+                          saveAs(
+                            blob,
+                            `contacts_page_${page}_${Date.now()}.csv`,
+                          );
+                          setShowExportDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-900"
+                      >
+                        📄 Export Page ({contacts.length}) - CSV
                       </button>
                     </div>
                   </>

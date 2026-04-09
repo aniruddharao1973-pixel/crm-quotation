@@ -1079,13 +1079,75 @@ Be specific. Avoid generic statements.
                   }
 
                   // Detailed mode (unchanged logic, only styling improved above)
+                  // Detailed mode with colored sections
+                  const sections = [
+                    {
+                      key: "Pipeline Status",
+                      color: "indigo",
+                      icon: "📊",
+                    },
+                    {
+                      key: "Main Risk",
+                      color: "red",
+                      icon: "⚠️",
+                    },
+                    {
+                      key: "Strategic Recommendation",
+                      color: "blue",
+                      icon: "💡",
+                    },
+                    {
+                      key: "Immediate Action",
+                      color: "emerald",
+                      icon: "🚀",
+                    },
+                  ];
+
+                  // helper to extract section content
+                  const extractSection = (title) => {
+                    const regex = new RegExp(
+                      `${title}:\\s*([\\s\\S]*?)(?=${sections
+                        .map((s) => s.key)
+                        .join(":|")}:|$)`,
+                      "i",
+                    );
+                    const match = clean.match(regex);
+                    return match ? match[1].trim() : "";
+                  };
+
                   return (
-                    <div className="text-sm text-gray-700">
-                      {clean.split("\n").map((line, i) => (
-                        <p key={i} className="mb-2 leading-relaxed">
-                          {line}
-                        </p>
-                      ))}
+                    <div className="space-y-4">
+                      {sections.map((s, i) => {
+                        const content = extractSection(s.key);
+                        if (!content) return null;
+
+                        return (
+                          <div
+                            key={i}
+                            className={`rounded-2xl border p-5 bg-${s.color}-50/80 border-${s.color}-200 hover:shadow-md transition`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div
+                                className={`h-10 w-10 flex items-center justify-center rounded-xl bg-${s.color}-100 text-lg`}
+                              >
+                                {s.icon}
+                              </div>
+
+                              <div>
+                                <p className="text-[11px] uppercase font-semibold text-gray-500 tracking-wide">
+                                  {s.key}
+                                </p>
+
+                                <p
+                                  className={`mt-1.5 text-sm font-medium leading-relaxed text-${s.color}-700`}
+                                >
+                                  {content}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })()
@@ -1900,13 +1962,6 @@ Be specific. Avoid generic statements.
       </main>
 
       {/* ─── FOOTER ─── */}
-      <footer className="border-t border-gray-200 bg-white">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <p className="text-center text-xs font-medium text-gray-400">
-            SalesCRM Pro Suite · Advanced Analytics
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

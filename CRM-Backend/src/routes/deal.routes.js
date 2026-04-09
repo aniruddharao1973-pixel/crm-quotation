@@ -10,6 +10,7 @@ import {
   bulkDeleteDeals,
   importDeals,
   updateStageHistoryNote,
+  getPipelineStats,
 } from "../controllers/deal.controller.js";
 import { protect, authorize } from "../middlewares/auth.middleware.js";
 import { validateDeal } from "../middlewares/validate.middleware.js";
@@ -35,5 +36,7 @@ router
   .delete(authorize("ADMIN", "MANAGER"), deleteDeal);
 
 router.put("/stage-history/:id", updateStageHistoryNote);
+
+router.get("/pipeline/stats", protect, getPipelineStats);
 
 export default router;
