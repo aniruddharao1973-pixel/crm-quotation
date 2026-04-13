@@ -112,7 +112,18 @@ export const getContact = asyncHandler(async (req, res) => {
       }),
     },
     include: {
-      account: { select: { id: true, accountName: true, phone: true } },
+      account: {
+        select: {
+          id: true,
+          accountName: true,
+          phone: true,
+          billingStreet: true,
+          billingCity: true,
+          billingState: true,
+          billingPincode: true,
+          billingCountry: true,
+        },
+      },
       owner: { select: { id: true, name: true, email: true } },
       createdBy: { select: { id: true, name: true } },
       modifiedBy: { select: { id: true, name: true } },
@@ -153,6 +164,11 @@ export const createContact = asyncHandler(async (req, res) => {
     createdById: req.user.id,
     modifiedById: req.user.id,
   };
+
+  // 🔥 remove null/empty fields
+  Object.keys(data).forEach((k) => {
+    if (data[k] === null || data[k] === "") delete data[k];
+  });
 
   const result = await prisma.$transaction(async (tx) => {
     const contact = await tx.contact.create({
@@ -214,6 +230,11 @@ export const updateContact = asyncHandler(async (req, res) => {
   }
 
   const data = { ...req.body, modifiedById: req.user.id };
+
+  // 🔥 prevent overwriting with null
+  Object.keys(data).forEach((k) => {
+    if (data[k] === null || data[k] === "") delete data[k];
+  });
   delete data.id;
   delete data.createdAt;
   delete data.updatedAt;
@@ -410,6 +431,7 @@ export const importContacts = asyncHandler(async (req, res) => {
       mailingCity: rowData["mailingcity"] || null,
       mailingState: rowData["mailingstate"] || null,
       mailingCountry: rowData["mailingcountry"] || null,
+      mailingFlat: rowData["mailingflat"] || rowData["flat"] || null,
       mailingStreet: rowData["mailingstreet"] || null,
       mailingZip: rowData["mailingzip"] || rowData["zipcode"] || null,
       description: rowData["description"] || null,

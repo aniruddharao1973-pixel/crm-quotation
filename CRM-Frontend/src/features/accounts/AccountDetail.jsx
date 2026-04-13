@@ -339,15 +339,15 @@ const AccountDetail = () => {
     .filter(Boolean)
     .join(", ");
 
-  const shippingAddress = [
-    account.shippingStreet,
-    account.shippingCity,
-    account.shippingState,
-    account.shippingPincode,
-    account.shippingCountry,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  // const shippingAddress = [
+  //   account.shippingStreet,
+  //   account.shippingCity,
+  //   account.shippingState,
+  //   account.shippingPincode,
+  //   account.shippingCountry,
+  // ]
+  //   .filter(Boolean)
+  //   .join(", ");
 
   const totalDealsValue =
     account.deals?.reduce((sum, deal) => sum + (deal.amount || 0), 0) || 0;
@@ -596,24 +596,24 @@ const AccountDetail = () => {
           </SectionCard>
 
           {/* Addresses */}
-          {(billingAddress || shippingAddress) && (
+          {billingAddress && (
             <SectionCard
               title="Addresses"
-              subtitle="Billing and shipping locations"
+              subtitle="Account address"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <AddressCard
-                  title="Billing Address"
+                  title="Address"
                   icon={MapPinIcon}
                   address={billingAddress}
                   variant="primary"
                 />
-                <AddressCard
+                {/* <AddressCard
                   title="Shipping Address"
                   icon={MapPinIcon}
                   address={shippingAddress}
                   variant="secondary"
-                />
+                /> */}
               </div>
             </SectionCard>
           )}

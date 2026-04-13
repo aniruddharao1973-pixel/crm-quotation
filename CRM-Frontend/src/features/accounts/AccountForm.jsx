@@ -25,7 +25,7 @@ import {
   GlobeAltIcon,
   MapPinIcon,
   CheckIcon,
-  DocumentDuplicateIcon,
+  // DocumentDuplicateIcon,
   ChevronUpDownIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
@@ -41,7 +41,7 @@ import {
   RocketLaunchIcon,
   BriefcaseIcon,
   PhotoIcon,
-  TruckIcon,
+  // TruckIcon,
   CreditCardIcon,
   LinkIcon,
   ChartBarIcon,
@@ -99,11 +99,11 @@ const initialForm = {
   billingState: "",
   billingPincode: "",
   billingCountry: "",
-  shippingStreet: "",
-  shippingCity: "",
-  shippingState: "",
-  shippingPincode: "",
-  shippingCountry: "",
+  // shippingStreet: "",
+  // shippingCity: "",
+  // shippingState: "",
+  // shippingPincode: "",
+  // shippingCountry: "",
 };
 
 /* ═══════════════════ CUSTOM DROPDOWN COMPONENT ═══════════════════ */
@@ -969,34 +969,34 @@ const TipsCard = () => (
 
 /* ═══════════════════ ADDRESS COPY CHECKBOX ═══════════════════ */
 
-const CopyAddressCheckbox = ({ checked, onChange }) => (
-  <label className="inline-flex items-center gap-3 cursor-pointer group">
-    <div className="relative">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="sr-only peer"
-      />
-      <div
-        className={`
-        w-6 h-6 rounded-lg border-2 transition-all duration-200 flex items-center justify-center
-        ${
-          checked
-            ? "bg-[#3B2E7E] border-[#3B2E7E]"
-            : "bg-white border-slate-300 group-hover:border-[#3B2E7E]/50"
-        }
-      `}
-      >
-        {checked && <CheckIcon className="w-4 h-4 text-white" />}
-      </div>
-    </div>
-    <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors flex items-center gap-2">
-      <DocumentDuplicateIcon className="w-4 h-4 text-slate-400" />
-      Copy from billing address
-    </span>
-  </label>
-);
+// const CopyAddressCheckbox = ({ checked, onChange }) => (
+//   <label className="inline-flex items-center gap-3 cursor-pointer group">
+//     <div className="relative">
+//       <input
+//         type="checkbox"
+//         checked={checked}
+//         onChange={onChange}
+//         className="sr-only peer"
+//       />
+//       <div
+//         className={`
+//         w-6 h-6 rounded-lg border-2 transition-all duration-200 flex items-center justify-center
+//         ${
+//           checked
+//             ? "bg-[#3B2E7E] border-[#3B2E7E]"
+//             : "bg-white border-slate-300 group-hover:border-[#3B2E7E]/50"
+//         }
+//       `}
+//       >
+//         {checked && <CheckIcon className="w-4 h-4 text-white" />}
+//       </div>
+//     </div>
+//     <span className="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors flex items-center gap-2">
+//       <DocumentDuplicateIcon className="w-4 h-4 text-slate-400" />
+//       Copy from billing address
+//     </span>
+//   </label>
+// );
 
 /* ═══════════════════ MAIN COMPONENT ═══════════════════ */
 
@@ -1013,7 +1013,7 @@ const AccountForm = () => {
 
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
-  const [copyBilling, setCopyBilling] = useState(false);
+  // const [copyBilling, setCopyBilling] = useState(false);
 
   /* ── load ── */
   useEffect(() => {
@@ -1037,25 +1037,51 @@ const AccountForm = () => {
   }, [account, isEdit, user]);
 
   /* ── copy billing ── */
-  useEffect(() => {
-    if (copyBilling) {
-      setForm((prev) => ({
-        ...prev,
-        shippingStreet: prev.billingStreet,
-        shippingCity: prev.billingCity,
-        shippingState: prev.billingState,
-        shippingPincode: prev.billingPincode,
-        shippingCountry: prev.billingCountry,
-      }));
+  // useEffect(() => {
+  //   if (copyBilling) {
+  //     setForm((prev) => ({
+  //       ...prev,
+  //       shippingStreet: prev.billingStreet,
+  //       shippingCity: prev.billingCity,
+  //       shippingState: prev.billingState,
+  //       shippingPincode: prev.billingPincode,
+  //       shippingCountry: prev.billingCountry,
+  //     }));
+  //   }
+  // }, [
+  //   copyBilling,
+  //   form.billingStreet,
+  //   form.billingCity,
+  //   form.billingState,
+  //   form.billingPincode,
+  //   form.billingCountry,
+  // ]);
+
+  const fetchAddressFromPincode = async (pincode) => {
+    if (!pincode || pincode.length !== 6) return;
+
+    try {
+      const res = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`,
+      );
+      const data = await res.json();
+
+      if (data[0]?.Status === "Success") {
+        const postOffice = data[0].PostOffice[0];
+
+        setForm((prev) => ({
+          ...prev,
+          billingCity: postOffice.District || "",
+          billingState: postOffice.State || "",
+          billingCountry: "India",
+        }));
+      } else {
+        console.warn("Invalid pincode");
+      }
+    } catch (err) {
+      console.error("Pincode fetch error:", err);
     }
-  }, [
-    copyBilling,
-    form.billingStreet,
-    form.billingCity,
-    form.billingState,
-    form.billingPincode,
-    form.billingCountry,
-  ]);
+  };
 
   /* ── change ── */
   const handleChange = (e) => {
@@ -1408,7 +1434,14 @@ const AccountForm = () => {
                 name="billingPincode"
                 label="Pincode"
                 value={form.billingPincode}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+
+                  const pin = e.target.value.replace(/\D/g, ""); // only numbers
+                  if (pin.length === 6) {
+                    fetchAddressFromPincode(pin);
+                  }
+                }}
                 placeholder="Enter pincode"
               />
 
@@ -1423,7 +1456,7 @@ const AccountForm = () => {
           </SectionCard>
 
           {/* ── SHIPPING ADDRESS ── */}
-          <SectionCard
+          {/* <SectionCard
             icon={TruckIcon}
             title="Shipping Address"
             subtitle="Product delivery location"
@@ -1484,7 +1517,7 @@ const AccountForm = () => {
                 disabled={copyBilling}
               />
             </div>
-          </SectionCard>
+          </SectionCard> */}
 
           {/* ── MOBILE ACTIONS ── */}
           <div className="flex lg:hidden items-center gap-4 pt-2">

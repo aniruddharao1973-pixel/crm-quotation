@@ -100,6 +100,7 @@
 // };
 
 // export default ContactForm;
+
 // src/features/contacts/ContactForm.jsx
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -111,7 +112,7 @@ import {
   clearCurrentContact,
 } from "./contactSlice";
 import { fetchUsers } from "../auth/authSlice";
-import { fetchAccountsDropdown } from "../accounts/accountSlice";
+import { fetchAccountsDropdown, fetchAccounts } from "../accounts/accountSlice";
 import { LEAD_SOURCES } from "../../constants";
 import ImageUpload from "../../components/ImageUpload";
 import toast from "react-hot-toast";
@@ -156,7 +157,9 @@ const ContactForm = () => {
 
   const { contact, detailLoading } = useSelector((s) => s.contacts);
   const { users, user } = useSelector((s) => s.auth);
-  const { dropdown: accountDropdown } = useSelector((s) => s.accounts);
+  const { dropdown: accountDropdown, accounts } = useSelector(
+    (s) => s.accounts,
+  );
 
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
@@ -164,6 +167,7 @@ const ContactForm = () => {
   useEffect(() => {
     dispatch(fetchUsers());
     dispatch(fetchAccountsDropdown());
+    dispatch(fetchAccounts({ page: 1, limit: 1000 }));
     if (isEdit) dispatch(fetchContact(id));
     return () => dispatch(clearCurrentContact());
   }, [dispatch, id, isEdit]);
@@ -183,6 +187,28 @@ const ContactForm = () => {
       }));
     }
   }, [contact, isEdit, user, searchParams]);
+
+  useEffect(() => {
+    if (!form.accountId || isEdit) return;
+    if (!accounts?.length) return;
+
+    const selectedAccount = accounts.find((a) => a.id === form.accountId);
+
+    if (!selectedAccount) return;
+
+    setForm((prev) => ({
+      ...prev,
+
+      // 🔥 Always update on account change
+      mailingFlat: selectedAccount.billingStreet || "", // best available fallback
+
+      mailingStreet: selectedAccount.billingStreet || "",
+      mailingCity: selectedAccount.billingCity || "",
+      mailingState: selectedAccount.billingState || "",
+      mailingZip: selectedAccount.billingPincode || "",
+      mailingCountry: selectedAccount.billingCountry || "",
+    }));
+  }, [form.accountId, accounts, isEdit]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -438,8 +464,18 @@ const ContactForm = () => {
                     ))}
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -471,8 +507,18 @@ const ContactForm = () => {
                     )}
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -498,8 +544,18 @@ const ContactForm = () => {
                     ))}
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <svg
+                      className="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </div>
                 </div>

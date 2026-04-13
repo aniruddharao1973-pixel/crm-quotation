@@ -121,11 +121,7 @@ lastActivityAt DateTime?
   billingPincode String?
   billingCountry String?
 
-  shippingStreet  String?
-  shippingCity    String?
-  shippingState   String?
-  shippingPincode String?
-  shippingCountry String?
+
 
   owner    User       @relation(fields: [accountOwnerId], references: [id])
   contacts Contact[]

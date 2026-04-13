@@ -398,6 +398,8 @@ export const importAccounts = asyncHandler(async (req, res) => {
       accountNumber: accNum,
       rating: parseAccountRating(rowData["rating"]),
       parentAccountId: rowData["parentaccountid"] || null,
+
+      // ✅ BILLING with fallback from shipping
       billingStreet: rowData["billingstreet"] || null,
       billingCity: rowData["billingcity"] || null,
       billingState: rowData["billingstate"] || null,
@@ -405,13 +407,6 @@ export const importAccounts = asyncHandler(async (req, res) => {
         ? String(rowData["billingcode"])
         : null,
       billingCountry: rowData["billingcountry"] || null,
-      shippingStreet: rowData["shippingstreet"] || null,
-      shippingCity: rowData["shippingcity"] || null,
-      shippingState: rowData["shippingstate"] || null,
-      shippingPincode: rowData["shippingcode"]
-        ? String(rowData["shippingcode"])
-        : null,
-      shippingCountry: rowData["shippingcountry"] || null,
     };
 
     // Remove empty nulls to prevent erasing existing data

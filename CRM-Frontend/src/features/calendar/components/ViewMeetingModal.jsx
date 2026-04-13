@@ -212,6 +212,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import Swal from "sweetalert2";
 import { useDispatch } from "react-redux";
 import { deleteMeeting } from "../calendarSlice";
 
@@ -224,13 +225,49 @@ export default function ViewMeetingModal({ meeting, onClose, onEdit }) {
   const start = new Date(meeting.start);
   const end = new Date(meeting.end);
 
-  const handleDelete = () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to cancel this meeting?",
-    );
-    if (!confirmDelete) return;
+  // const handleDelete = () => {
+  //   const confirmDelete = window.confirm(
+  //     "Are you sure you want to cancel this meeting?",
+  //   );
+  //   if (!confirmDelete) return;
+  //   dispatch(deleteMeeting(meeting.id));
+  //   onClose();
+  // };
+
+  const handleDelete = async () => {
+    const result = await Swal.fire({
+      title: `<div class="text-lg font-semibold">Cancel Meeting</div>`,
+      html: `
+      <div class="text-sm text-left leading-relaxed">
+        <p class="mb-2">
+          Are you sure you want to cancel this meeting?
+        </p>
+        <p class="text-gray-500 text-xs">
+          This action cannot be undone.
+        </p>
+      </div>
+    `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, cancel it",
+      cancelButtonText: "No, keep it",
+      focusCancel: true,
+    });
+
+    if (!result.isConfirmed) return;
+
     dispatch(deleteMeeting(meeting.id));
     onClose();
+
+    Swal.fire({
+      title: "Cancelled",
+      text: "The meeting has been successfully cancelled.",
+      icon: "success",
+      timer: 1800,
+      showConfirmButton: false,
+    });
   };
 
   const handleEdit = () => {

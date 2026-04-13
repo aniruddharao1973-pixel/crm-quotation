@@ -102,8 +102,8 @@
 
 // export default ContactDetail;
 // src/features/contacts/ContactDetail.jsx
-// src/features/contacts/ContactDetail.jsx
 
+// src/features/contacts/ContactDetail.jsx
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -133,35 +133,63 @@ import {
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 
-const InfoItem = ({ icon: Icon, label, value, isLink, to, iconBg = "bg-[#3B2E7E]/10", iconColor = "text-[#3B2E7E]" }) => {
+const InfoItem = ({
+  icon: Icon,
+  label,
+  value,
+  isLink,
+  to,
+  iconBg = "bg-[#3B2E7E]/10",
+  iconColor = "text-[#3B2E7E]",
+}) => {
   if (!value) return null;
 
   return (
     <div className="group flex items-center gap-4 p-4 rounded-xl hover:bg-[#3B2E7E]/5 transition-all duration-200">
-      <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
+      <div
+        className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}
+      >
         <Icon className={`w-5 h-5 ${iconColor}`} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-1">
+          {label}
+        </p>
         {isLink ? (
-          <Link to={to} className="text-sm font-semibold text-[#3B2E7E] hover:text-[#2A1F5C] transition-colors">
+          <Link
+            to={to}
+            className="text-sm font-semibold text-[#3B2E7E] hover:text-[#2A1F5C] transition-colors"
+          >
             {value}
           </Link>
         ) : (
-          <p className="text-sm font-semibold text-slate-800 truncate">{value}</p>
+          <p className="text-sm font-semibold text-slate-800 truncate">
+            {value}
+          </p>
         )}
       </div>
     </div>
   );
 };
 
-const SectionCard = ({ title, subtitle, action, children, className = "", noPadding = false }) => (
-  <div className={`bg-white rounded-2xl shadow-sm shadow-[#3B2E7E]/5 border border-[#3B2E7E]/10 overflow-hidden ${className}`}>
+const SectionCard = ({
+  title,
+  subtitle,
+  action,
+  children,
+  className = "",
+  noPadding = false,
+}) => (
+  <div
+    className={`bg-white rounded-2xl shadow-sm shadow-[#3B2E7E]/5 border border-[#3B2E7E]/10 overflow-hidden ${className}`}
+  >
     {(title || action) && (
       <div className="flex items-center justify-between px-6 py-5 border-b border-[#3B2E7E]/10 bg-gradient-to-r from-[#3B2E7E]/5 to-white">
         <div>
           <h2 className="text-base font-bold text-slate-800">{title}</h2>
-          {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>
+          )}
         </div>
         {action}
       </div>
@@ -173,13 +201,39 @@ const SectionCard = ({ title, subtitle, action, children, className = "", noPadd
 const DealCard = ({ deal }) => {
   const getStageStyles = (stage) => {
     const styles = {
-      qualification: { bg: "bg-sky-100", text: "text-sky-700", dot: "bg-sky-500" },
-      proposal: { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
-      negotiation: { bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
-      closed_won: { bg: "bg-emerald-100", text: "text-emerald-700", dot: "bg-emerald-500" },
-      closed_lost: { bg: "bg-rose-100", text: "text-rose-700", dot: "bg-rose-500" },
+      qualification: {
+        bg: "bg-sky-100",
+        text: "text-sky-700",
+        dot: "bg-sky-500",
+      },
+      proposal: {
+        bg: "bg-amber-100",
+        text: "text-amber-700",
+        dot: "bg-amber-500",
+      },
+      negotiation: {
+        bg: "bg-purple-100",
+        text: "text-purple-700",
+        dot: "bg-purple-500",
+      },
+      closed_won: {
+        bg: "bg-emerald-100",
+        text: "text-emerald-700",
+        dot: "bg-emerald-500",
+      },
+      closed_lost: {
+        bg: "bg-rose-100",
+        text: "text-rose-700",
+        dot: "bg-rose-500",
+      },
     };
-    return styles[stage] || { bg: "bg-slate-100", text: "text-slate-700", dot: "bg-slate-500" };
+    return (
+      styles[stage] || {
+        bg: "bg-slate-100",
+        text: "text-slate-700",
+        dot: "bg-slate-500",
+      }
+    );
   };
 
   const stageStyles = getStageStyles(deal.stage);
@@ -199,8 +253,12 @@ const DealCard = ({ deal }) => {
               {deal.dealName}
             </p>
             <div className="flex items-center gap-2 mt-2">
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${stageStyles.bg} ${stageStyles.text}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${stageStyles.dot}`}></span>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${stageStyles.bg} ${stageStyles.text}`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${stageStyles.dot}`}
+                ></span>
                 {formatLabel(deal.stage)}
               </span>
             </div>
@@ -229,7 +287,9 @@ const StatCard = ({ icon: Icon, label, value, variant = "primary" }) => {
 
   return (
     <div className="bg-white rounded-xl p-5 border border-[#3B2E7E]/10 hover:shadow-lg hover:shadow-[#3B2E7E]/10 transition-all duration-300">
-      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${variants[variant]} flex items-center justify-center mb-4 shadow-lg`}>
+      <div
+        className={`w-12 h-12 rounded-xl bg-gradient-to-br ${variants[variant]} flex items-center justify-center mb-4 shadow-lg`}
+      >
         <Icon className="w-6 h-6 text-white" />
       </div>
       <p className="text-2xl font-bold text-slate-800">{value}</p>
@@ -254,7 +314,9 @@ const ContactDetail = () => {
       <div className="flex items-center justify-center min-h-[500px]">
         <div className="text-center">
           <Spinner size="lg" />
-          <p className="text-sm text-slate-500 mt-4">Loading contact details...</p>
+          <p className="text-sm text-slate-500 mt-4">
+            Loading contact details...
+          </p>
         </div>
       </div>
     );
@@ -264,33 +326,36 @@ const ContactDetail = () => {
 
   const mailingAddress = [
     contact.mailingFlat,
-    contact.mailingStreet,
-    contact.mailingCity,
-    contact.mailingState,
-    contact.mailingZip,
-    contact.mailingCountry,
+    contact.mailingStreet || contact.account?.billingStreet,
+    contact.mailingCity || contact.account?.billingCity,
+    contact.mailingState || contact.account?.billingState,
+    contact.mailingZip || contact.account?.billingPincode,
+    contact.mailingCountry || contact.account?.billingCountry,
   ]
     .filter(Boolean)
     .join(", ");
 
-  const totalDealsValue = contact.deals?.reduce((sum, deal) => sum + (deal.amount || 0), 0) || 0;
+  const totalDealsValue =
+    contact.deals?.reduce((sum, deal) => sum + (deal.amount || 0), 0) || 0;
 
   return (
     <div className="max-w-7xl mx-auto">
       {/* Top Navigation Bar */}
       <div className="flex items-center justify-between mb-6">
         <nav className="flex items-center gap-2 text-sm">
-          <Link 
-            to="/contacts" 
+          <Link
+            to="/contacts"
             className="flex items-center gap-2 text-slate-500 hover:text-[#3B2E7E] transition-colors font-medium"
           >
             <ArrowLeftIcon className="w-4 h-4" />
             Contacts
           </Link>
           <ChevronRightIcon className="w-4 h-4 text-slate-300" />
-          <span className="text-slate-800 font-semibold truncate max-w-[200px]">{fullName}</span>
+          <span className="text-slate-800 font-semibold truncate max-w-[200px]">
+            {fullName}
+          </span>
         </nav>
-        
+
         <div className="flex items-center gap-2">
           <button className="p-2.5 rounded-xl hover:bg-[#3B2E7E]/10 transition-colors text-slate-500 hover:text-[#3B2E7E]">
             <ShareIcon className="w-5 h-5" />
@@ -331,8 +396,16 @@ const ContactDetail = () => {
                 />
               </div>
               <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-400 rounded-lg border-3 border-[#2A1F5C] flex items-center justify-center shadow-lg">
-                <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <svg
+                  className="w-3.5 h-3.5 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
             </div>
@@ -415,7 +488,9 @@ const ContactDetail = () => {
         <StatCard
           icon={CalendarDaysIcon}
           label="Days Since Created"
-          value={Math.floor((new Date() - new Date(contact.createdAt)) / (1000 * 60 * 60 * 24))}
+          value={Math.floor(
+            (new Date() - new Date(contact.createdAt)) / (1000 * 60 * 60 * 24),
+          )}
           variant="tertiary"
         />
       </div>
@@ -425,8 +500,8 @@ const ContactDetail = () => {
         {/* Left Column - Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* Contact Information */}
-          <SectionCard 
-            title="Contact Information" 
+          <SectionCard
+            title="Contact Information"
             subtitle="Primary contact details and information"
             noPadding
           >
@@ -481,7 +556,9 @@ const ContactDetail = () => {
 
             {contact.leadSource && (
               <div className="mx-6 mb-6 p-4 rounded-xl bg-gradient-to-r from-[#3B2E7E]/10 to-purple-50 border border-[#3B2E7E]/10">
-                <p className="text-xs font-semibold text-[#3B2E7E] uppercase tracking-wide mb-2">Lead Source</p>
+                <p className="text-xs font-semibold text-[#3B2E7E] uppercase tracking-wide mb-2">
+                  Lead Source
+                </p>
                 <span className="inline-flex items-center px-3 py-1.5 rounded-lg bg-white text-sm font-semibold text-slate-700 shadow-sm border border-[#3B2E7E]/10">
                   {formatLabel(contact.leadSource)}
                 </span>
@@ -491,7 +568,10 @@ const ContactDetail = () => {
 
           {/* Address */}
           {mailingAddress && (
-            <SectionCard title="Mailing Address" subtitle="Primary mailing location">
+            <SectionCard
+              title="Mailing Address"
+              subtitle="Primary mailing location"
+            >
               <div className="flex items-start gap-4 p-5 rounded-xl bg-gradient-to-br from-[#3B2E7E]/5 to-purple-50/50 border border-[#3B2E7E]/10">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3B2E7E] to-[#2A1F5C] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#3B2E7E]/30">
                   <MapPinIcon className="w-6 h-6 text-white" />
@@ -500,7 +580,7 @@ const ContactDetail = () => {
                   <p className="text-sm font-semibold text-slate-800 leading-relaxed">
                     {mailingAddress}
                   </p>
-                  <a 
+                  <a
                     href={`https://maps.google.com/?q=${encodeURIComponent(mailingAddress)}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -516,7 +596,10 @@ const ContactDetail = () => {
 
           {/* Description */}
           {contact.description && (
-            <SectionCard title="Description" subtitle="Additional notes and details">
+            <SectionCard
+              title="Description"
+              subtitle="Additional notes and details"
+            >
               <div className="prose prose-sm prose-slate max-w-none">
                 <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
                   {contact.description}
@@ -533,7 +616,7 @@ const ContactDetail = () => {
               <button
                 onClick={() =>
                   navigate(
-                    `/deals/new?accountId=${contact.accountId}&contactId=${contact.id}`
+                    `/deals/new?accountId=${contact.accountId}&contactId=${contact.id}`,
                   )
                 }
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#3B2E7E] to-[#2A1F5C] text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-[#3B2E7E]/30 transition-all duration-200"
@@ -554,12 +637,16 @@ const ContactDetail = () => {
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#3B2E7E]/10 to-purple-100 flex items-center justify-center mx-auto mb-4">
                   <CurrencyDollarIcon className="w-8 h-8 text-[#3B2E7E]" />
                 </div>
-                <h3 className="text-base font-semibold text-slate-800 mb-1">No deals yet</h3>
-                <p className="text-sm text-slate-500 mb-4">Create the first deal for this contact</p>
+                <h3 className="text-base font-semibold text-slate-800 mb-1">
+                  No deals yet
+                </h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  Create the first deal for this contact
+                </p>
                 <button
                   onClick={() =>
                     navigate(
-                      `/deals/new?accountId=${contact.accountId}&contactId=${contact.id}`
+                      `/deals/new?accountId=${contact.accountId}&contactId=${contact.id}`,
                     )
                   }
                   className="inline-flex items-center gap-2 text-sm font-semibold text-[#3B2E7E] hover:text-[#2A1F5C] transition-colors"
@@ -580,7 +667,7 @@ const ContactDetail = () => {
               {/* Decorative circles */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full transform translate-x-1/2 -translate-y-1/2"></div>
               <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full transform -translate-x-1/2 translate-y-1/2"></div>
-              
+
               <h3 className="relative text-xs font-semibold uppercase tracking-wider text-purple-200 mb-4">
                 Associated Account
               </h3>
@@ -595,7 +682,9 @@ const ContactDetail = () => {
                   <p className="text-sm font-bold text-white truncate">
                     {contact.account.accountName}
                   </p>
-                  <p className="text-xs text-purple-200 mt-0.5">Click to view account</p>
+                  <p className="text-xs text-purple-200 mt-0.5">
+                    Click to view account
+                  </p>
                 </div>
                 <ChevronRightIcon className="w-5 h-5 text-purple-200 group-hover:text-white group-hover:translate-x-1 transition-all" />
               </Link>
@@ -620,7 +709,9 @@ const ContactDetail = () => {
                     <p className="text-sm font-semibold text-slate-800 group-hover:text-rose-600 transition-colors">
                       Send Email
                     </p>
-                    <p className="text-xs text-slate-500 truncate max-w-[150px]">{contact.email}</p>
+                    <p className="text-xs text-slate-500 truncate max-w-[150px]">
+                      {contact.email}
+                    </p>
                   </div>
                 </a>
               )}
@@ -667,19 +758,23 @@ const ContactDetail = () => {
             <div className="relative">
               {/* Timeline line */}
               <div className="absolute left-5 top-6 bottom-6 w-px bg-gradient-to-b from-[#3B2E7E] via-[#3B2E7E]/30 to-transparent"></div>
-              
+
               <div className="space-y-6">
                 <div className="relative flex gap-4">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B2E7E] to-[#2A1F5C] flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#3B2E7E]/30 z-10">
                     <CalendarDaysIcon className="w-5 h-5 text-white" />
                   </div>
                   <div className="pt-1">
-                    <p className="text-sm font-semibold text-slate-800">Created</p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Created
+                    </p>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {formatDate(contact.createdAt)}
                     </p>
                     {contact.createdBy?.name && (
-                      <p className="text-xs text-slate-400 mt-1">by {contact.createdBy.name}</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        by {contact.createdBy.name}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -689,12 +784,16 @@ const ContactDetail = () => {
                     <ClockIcon className="w-5 h-5 text-white" />
                   </div>
                   <div className="pt-1">
-                    <p className="text-sm font-semibold text-slate-800">Last Modified</p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Last Modified
+                    </p>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {formatDate(contact.updatedAt)}
                     </p>
                     {contact.modifiedBy?.name && (
-                      <p className="text-xs text-slate-400 mt-1">by {contact.modifiedBy.name}</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        by {contact.modifiedBy.name}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -705,7 +804,9 @@ const ContactDetail = () => {
           {/* Contact ID Badge */}
           <div className="bg-gradient-to-r from-[#3B2E7E]/5 to-purple-50 rounded-2xl p-4 border border-[#3B2E7E]/10">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#3B2E7E]">Contact ID</span>
+              <span className="text-xs font-semibold text-[#3B2E7E]">
+                Contact ID
+              </span>
               <code className="text-xs font-mono text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-[#3B2E7E]/10 shadow-sm">
                 {contact.id}
               </code>
@@ -894,8 +995,8 @@ export default ContactDetail;
 //       {/* Top Navigation Bar */}
 //       <div className="flex items-center justify-between mb-6">
 //         <nav className="flex items-center gap-2 text-sm">
-//           <Link 
-//             to="/contacts" 
+//           <Link
+//             to="/contacts"
 //             className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors font-medium"
 //           >
 //             <ArrowLeftIcon className="w-4 h-4" />
@@ -904,7 +1005,7 @@ export default ContactDetail;
 //           <ChevronRightIcon className="w-4 h-4 text-slate-300" />
 //           <span className="text-slate-800 font-semibold truncate max-w-[200px]">{fullName}</span>
 //         </nav>
-        
+
 //         <div className="flex items-center gap-2">
 //           <button className="p-2.5 rounded-xl hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700">
 //             <ShareIcon className="w-5 h-5" />
@@ -1033,8 +1134,8 @@ export default ContactDetail;
 //         {/* Left Column - Main Content */}
 //         <div className="lg:col-span-2 space-y-8">
 //           {/* Contact Information */}
-//           <SectionCard 
-//             title="Contact Information" 
+//           <SectionCard
+//             title="Contact Information"
 //             subtitle="Primary contact details and information"
 //             noPadding
 //           >
@@ -1108,7 +1209,7 @@ export default ContactDetail;
 //                   <p className="text-sm font-semibold text-slate-800 leading-relaxed">
 //                     {mailingAddress}
 //                   </p>
-//                   <a 
+//                   <a
 //                     href={`https://maps.google.com/?q=${encodeURIComponent(mailingAddress)}`}
 //                     target="_blank"
 //                     rel="noopener noreferrer"
@@ -1271,7 +1372,7 @@ export default ContactDetail;
 //             <div className="relative">
 //               {/* Timeline line */}
 //               <div className="absolute left-5 top-6 bottom-6 w-px bg-gradient-to-b from-blue-200 via-blue-100 to-transparent"></div>
-              
+
 //               <div className="space-y-6">
 //                 <div className="relative flex gap-4">
 //                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-200/50 z-10">
