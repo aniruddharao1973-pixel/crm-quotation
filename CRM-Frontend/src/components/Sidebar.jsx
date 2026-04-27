@@ -371,6 +371,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchAssignments } from "../features/assign/assignmentSlice";
 import AssignmentGrid from "../features/assign/AssignmentGrid";
 import { NavLink, useLocation } from "react-router-dom";
+import { FileText, Package } from "lucide-react";
 import {
   LayoutDashboard,
   Building2,
@@ -622,6 +623,8 @@ export default function Sidebar({ mobileOpen = false, onClose }) {
     { name: "Accounts", to: "/accounts", icon: Building2 },
     { name: "Contacts", to: "/contacts", icon: Users },
     { name: "Leads", to: "/deals", icon: IndianRupee },
+    { name: "Quotation Hub", to: "/quotations", icon: FileText },
+    { name: "Items", to: "/items", icon: Package },
     { name: "Tasks", to: "/tasks", icon: CheckSquare },
     { name: "Calendar", to: "/calendar", icon: CalendarDays },
 

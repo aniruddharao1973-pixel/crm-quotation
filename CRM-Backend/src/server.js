@@ -24,6 +24,8 @@ import aiRoutes from "./routes/ai.routes.js";
 import dealRiskRoutes from "./routes/dealRisk.routes.js";
 import emailRoutes from "./modules/email/email.routes.js";
 import calendarRoutes from "./modules/calendar/calendar.routes.js";
+import quotationRoutes from "./modules/quotation/quotation.routes.js";
+import itemRoutes from "./modules/item/item.routes.js";
 
 import { warmUpModel, getModelStatus } from "./ai/aiClient.js";
 
@@ -150,6 +152,10 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/assignment", assignmentRoutes);
+app.use("/api/quotations", quotationRoutes);
+app.use("/api/items", itemRoutes);
+
+
 
 app.use("/public", express.static("public"));
 

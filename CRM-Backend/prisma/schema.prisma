@@ -126,6 +126,7 @@ lastActivityAt DateTime?
   owner    User       @relation(fields: [accountOwnerId], references: [id])
   contacts Contact[]
   deals    Deal[]
+  quotations Quotation[]
   tasks    Task[]
   emails   EmailLog[]
   whatsAppMessages WhatsAppMessage[]
@@ -267,6 +268,7 @@ model Deal {
   modifiedBy   User   @relation("DealModifiedBy", fields: [modifiedById], references: [id])
 
   tasks       Task[]
+  quotations Quotation[]
   emails      EmailLog[]
   whatsAppMessages WhatsAppMessage[]
   meetings Meeting[]
@@ -501,6 +503,13 @@ enum CampaignStatus {
   SENDING
   COMPLETED
   FAILED
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
 }
 
 model Reminder {
@@ -899,4 +908,134 @@ model AccountAssignment {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([accountId, userId])
+}
+
+model Item {
+  id          String  @id @default(uuid())
+
+  category    String?
+  sku         String?
+  name        String?
+  description String?
+  basePrice   Float?
+    discount    Float? @default(0)   // ✅ ADD THIS
+
+
+  make           String?
+  mfgPartNo      String?
+  uom            String?
+  defaultRemarks String?
+
+  parentId String?
+  parent   Item?   @relation("ItemHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Item[]  @relation("ItemHierarchy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quotationItems QuotationItem[]
+
+  @@index([parentId])
+  @@index([sku])
+}
+
+model Quotation {
+  id            String   @id @default(uuid())
+  quotationNo   String   @unique
+
+  // 🔗 RELATIONS (CRITICAL)
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  dealId String
+  deal   Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  // DATA
+  issueDate  DateTime
+  validUntil DateTime?
+
+  status QuotationStatus @default(DRAFT)
+
+  subtotal       Float @default(0)
+  discountTotal  Float @default(0)
+  taxTotal       Float @default(0)
+  grandTotal     Float @default(0)
+
+  notes String? @db.Text
+  terms String? @db.Text
+
+  // RELATION
+  items QuotationItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([accountId])
+  @@index([dealId])
+}
+
+model QuotationItem {
+  id String @id @default(uuid())
+
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   Item @relation(fields: [itemId], references: [id])
+
+  // ✅ SNAPSHOT DATA (IMPORTANT)
+  sku         String
+  description String?
+  category    String?   // ✅ ADD THIS LINE
+
+
+  // ✅ NEW — SNAPSHOT FROM ITEM
+  make      String?
+  mfgPartNo String?
+  uom       String?
+
+  // ✅ USER EDITABLE
+  remarks String?
+
+  quantity Float
+  price    Float
+  discount Float @default(0)
+
+  subItems QuotationSubItem[]
+
+  lineTotal Float
+
+  createdAt DateTime @default(now())
+
+  @@index([quotationId])
+  @@index([itemId])
+}
+
+model QuotationSubItem {
+  id String @id @default(uuid())
+
+  quotationItemId String
+  quotationItem   QuotationItem @relation(fields: [quotationItemId], references: [id], onDelete: Cascade)
+
+  itemId String?   // reference to Item (child)
+
+  // 🔥 SNAPSHOT FIELDS (FIX)
+  name       String
+  sku        String?
+  category   String?
+  make       String?   // ✅ NEW
+  mfgPartNo  String?   // ✅ NEW
+  uom        String?   // ✅ NEW
+
+  description String?
+
+  quantity Float
+  price    Float
+  discount Float @default(0)
+
+  lineTotal Float
+
+  createdAt DateTime @default(now())
+
+  @@index([quotationItemId])
 }

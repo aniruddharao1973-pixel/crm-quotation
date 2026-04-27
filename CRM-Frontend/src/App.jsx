@@ -240,6 +240,14 @@ const TaskForm = lazy(() => import("./features/tasks/TaskForm"));
 const Users = lazy(() => import("./features/users/Users"));
 const CreateUser = lazy(() => import("./features/users/CreateUser"));
 const EditUser = lazy(() => import("./features/users/EditUser"));
+const QuotationList = lazy(() => import("./features/quotations/QuotationList"));
+const QuotationForm = lazy(() => import("./features/quotations/QuotationForm"));
+const QuotationDetail = lazy(
+  () => import("./features/quotations/QuotationDetail"),
+);
+const ItemList = lazy(() => import("./features/items/ItemList"));
+const ItemForm = lazy(() => import("./features/items/ItemForm"));
+const ItemDetail = lazy(() => import("./features/items/ItemDetail"));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center py-20">
@@ -525,6 +533,79 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <CalendarPage />
+              </Suspense>
+            }
+          />
+          {/* Quotations */}
+          <Route
+            path="quotations"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <QuotationList />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="quotations/new"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <QuotationForm />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="quotations/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <QuotationDetail />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="quotations/:id/edit"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <QuotationForm />
+              </Suspense>
+            }
+          />
+
+          {/* Items */}
+          <Route
+            path="items"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ItemList />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="items/new"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ItemForm />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="items/:id"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ItemDetail />
+              </Suspense>
+            }
+          />
+
+          <Route
+            path="items/:id/edit"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ItemForm />
               </Suspense>
             }
           />

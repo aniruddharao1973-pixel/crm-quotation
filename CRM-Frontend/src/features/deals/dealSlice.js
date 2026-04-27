@@ -468,6 +468,24 @@ export const updateStageHistoryNote = createAsyncThunk(
   },
 );
 
+/* ================= FETCH BY ACCOUNT ================= */
+export const fetchDealsByAccount = createAsyncThunk(
+  "deals/fetchByAccount",
+  async (accountId, { rejectWithValue }) => {
+    try {
+      const { data } = await API.get("/deals", {
+        params: { accountId },
+      });
+
+      return data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch deals by account",
+      );
+    }
+  },
+);
+
 /* ======================================================= */
 
 const dealSlice = createSlice({
@@ -577,6 +595,21 @@ const dealSlice = createSlice({
             state.deal.stageHistory[idx] = updated;
           }
         }
+      })
+
+      /* ================= FETCH BY ACCOUNT ================= */
+      .addCase(fetchDealsByAccount.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchDealsByAccount.fulfilled, (state, action) => {
+        state.loading = false;
+
+        // 🔥 overwrite with filtered deals
+        state.deals = action.payload.data;
+      })
+      .addCase(fetchDealsByAccount.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
       /* ================= DELETE ================= */
