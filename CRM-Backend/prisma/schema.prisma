@@ -941,16 +941,20 @@ model Item {
 
 model Quotation {
   id            String   @id @default(uuid())
-  quotationNo   String   @unique
 
-  // 🔗 RELATIONS (CRITICAL)
+  quotationNo   String
+
+  version       Int
+  isLatest      Boolean  @default(true)
+
+  parentQuotationId String?
+
   accountId String
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   dealId String
   deal   Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
-  // DATA
   issueDate  DateTime
   validUntil DateTime?
 
@@ -964,12 +968,14 @@ model Quotation {
   notes String? @db.Text
   terms String? @db.Text
 
-  // RELATION
   items QuotationItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([quotationNo, version])
+  @@index([quotationNo])
+  @@index([isLatest])
   @@index([accountId])
   @@index([dealId])
 }

@@ -5,6 +5,7 @@ import {
   createQuotationController,
   getQuotationsController,
   getQuotationByIdController,
+  getQuotationHistoryController, // 🔥 NEW
   updateQuotationController,
   deleteQuotationController,
 } from "./quotation.controller.js";
@@ -16,6 +17,10 @@ router.post("/", createQuotationController);
 
 /* ================= GET ALL ================= */
 router.get("/", getQuotationsController);
+
+/* ================= GET HISTORY ================= */
+// 🔥 IMPORTANT: place BEFORE "/:id"
+router.get("/history/:quotationNo", getQuotationHistoryController);
 
 /* ================= GET ONE ================= */
 router.get("/:id", getQuotationByIdController);

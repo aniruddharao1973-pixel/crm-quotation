@@ -137,6 +137,19 @@ export const updateQuotation = createAsyncThunk(
   },
 );
 
+/* ================= FETCH HISTORY ================= */
+export const fetchQuotationHistory = createAsyncThunk(
+  "quotations/fetchHistory",
+  async (quotationNo, { rejectWithValue }) => {
+    try {
+      const res = await API.get(`/quotations/history/${quotationNo}`);
+      return normalize(res);
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Fetch history failed");
+    }
+  },
+);
+
 /* =========================================================
    ✅ SLICE
 ========================================================= */
@@ -145,7 +158,10 @@ const quotationSlice = createSlice({
 
   initialState: {
     list: [],
-    selected: null, // 🔥 NEW (for detail page)
+    selected: null,
+
+    history: [], // 🔥 NEW
+
     loading: false,
     error: null,
   },
@@ -156,6 +172,11 @@ const quotationSlice = createSlice({
     },
     clearSelectedQuotation: (state) => {
       state.selected = null;
+    },
+
+    clearQuotationHistory: (state) => {
+      // 🔥 ADD HERE
+      state.history = [];
     },
   },
 
@@ -206,13 +227,32 @@ const quotationSlice = createSlice({
       .addCase(updateQuotation.fulfilled, (state, action) => {
         const updated = normalizeQuotation(action.payload);
 
-        // update list
-        state.list = state.list.map((q) => (q.id === updated.id ? updated : q));
+        // 🔥 remove old version (same quotationNo)
+        state.list = state.list.filter(
+          (q) => q.quotationNo !== updated.quotationNo,
+        );
 
-        // update selected (important for edit screen)
-        if (state.selected?.id === updated.id) {
-          state.selected = updated;
-        }
+        // 🔥 add latest on top
+        state.list.unshift(updated);
+
+        // update selected
+        state.selected = updated;
+      })
+
+      /* ================= FETCH HISTORY ================= */
+      .addCase(fetchQuotationHistory.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchQuotationHistory.fulfilled, (state, action) => {
+        state.loading = false;
+
+        state.history = Array.isArray(action.payload)
+          ? action.payload.map(normalizeQuotation)
+          : [];
+      })
+      .addCase(fetchQuotationHistory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
       /* ================= DELETE ================= */
@@ -222,7 +262,10 @@ const quotationSlice = createSlice({
   },
 });
 
-export const { clearQuotationError, clearSelectedQuotation } =
-  quotationSlice.actions;
+export const {
+  clearQuotationError,
+  clearSelectedQuotation,
+  clearQuotationHistory,
+} = quotationSlice.actions;
 
 export default quotationSlice.reducer;

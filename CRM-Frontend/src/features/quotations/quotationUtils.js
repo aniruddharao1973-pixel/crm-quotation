@@ -77,7 +77,7 @@ export function calcQuotationTotals(form) {
       (1 - Number(item.discount || 0) / 100);
 
     // ✅ FINAL LINE TOTAL (CRITICAL FIX)
-    const base = hasSubItems ? subTotal : parentTotal;
+    const base = parentTotal + subTotal;
 
     return {
       ...item,
